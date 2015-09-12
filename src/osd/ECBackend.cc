@@ -829,11 +829,12 @@ void ECBackend::handle_sub_write(
   ECSubWrite &op,
   Context *on_local_applied_sync)
 {
-  if (msg)
-    msg->mark_started();
   assert(!get_parent()->get_log().get_missing().is_missing(op.soid));
-  if (!get_parent()->pgb_is_primary())
+  if (!get_parent()->pgb_is_primary()) {
     get_parent()->update_stats(op.stats);
+    if (msg)
+      msg->mark_started();
+  }
   ObjectStore::Transaction *localt = new ObjectStore::Transaction;
   localt->set_use_tbl(op.t.get_use_tbl());
   if (!op.temp_added.empty()) {

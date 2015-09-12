@@ -2174,7 +2174,7 @@ void FileStore::_set_replay_guard(coll_t cid,
     assert(0 == "_set_replay_guard failed");
   }
   _set_replay_guard(fd, spos, 0, in_progress);
-  ::close(fd);
+  VOID_TEMP_FAILURE_RETRY(::close(fd));
 } 
 
 
@@ -2230,7 +2230,7 @@ void FileStore::_close_replay_guard(coll_t cid,
     assert(0 == "_close_replay_guard failed");
   }
   _close_replay_guard(fd, spos);
-  ::close(fd);
+  VOID_TEMP_FAILURE_RETRY(::close(fd));
 } 
 
 void FileStore::_close_replay_guard(int fd, const SequencerPosition& spos)
@@ -3903,6 +3903,7 @@ int FileStore::_fgetattrs(int fd, map<string,bufferptr>& aset)
     dout(10) << " -ERANGE, got " << len << dendl;
     if (len < 0) {
       assert(!m_filestore_fail_eio || len != -EIO);
+      delete[] names2;
       return len;
     }
     name = names2;
@@ -3921,8 +3922,10 @@ int FileStore::_fgetattrs(int fd, map<string,bufferptr>& aset)
       if (*name) {
         dout(20) << "fgetattrs " << fd << " getting '" << name << "'" << dendl;
         int r = _fgetattr(fd, attrname, aset[name]);
-        if (r < 0)
+        if (r < 0) {
+	  delete[] names2;
 	  return r;
+	}
       }
     }
     name += strlen(name) + 1;
