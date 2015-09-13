@@ -38,6 +38,8 @@ using namespace std;
 #define SECRET_KEY_LEN 40
 #define PUBLIC_ID_LEN 20
 
+#define ONE_DAY_SEC 60*60*24
+
 static RGWRados *store = NULL;
 
 void _usage() 
@@ -2773,6 +2775,9 @@ next:
     ret = parse_date_str(end_date, end_time);
     if (ret < 0)
       return -ret;
+ 
+    if ((end_time.sec() % ONE_DAY_SEC == 0) && (end_time.nsec() == 0))
+      end_time = utime_t(end_time.sec() + ONE_DAY_SEC, end_time.nsec());
 
     int i = (specified_shard_id ? shard_id : 0);
 
